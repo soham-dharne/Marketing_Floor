@@ -1,12 +1,34 @@
-import * as pty from 'node-pty'
 import { randomUUID } from 'node:crypto'
+import { createRequire } from 'node:module'
 import os from 'node:os'
+import type * as PtyModule from 'node-pty'
 import type { PtySpawnOptions, SessionSnapshot, SessionStatus } from '../../shared/types'
 
 interface TrackedSession {
   snapshot: SessionSnapshot
-  proc: pty.IPty
+  proc: PtyModule.IPty
   activityTimer: NodeJS.Timeout | null
+}
+
+// node-pty ships a native addon (pty.node) that must match this Electron
+// build's ABI. A mismatch, a missing prebuild for the current platform, or
+// a rebuild that never ran throws the moment the module is evaluated — and
+// since that used to happen via a top-level `import`, it took the whole
+// main process down before a single window could open. Loading it lazily,
+// on first spawn, confines that failure to "this session failed to start"
+// instead of an unrecoverable crash on app boot.
+const requireNative = createRequire(import.meta.url)
+let ptyModule: typeof PtyModule | null = null
+let ptyLoadError: string | null = null
+
+function loadPty(): typeof PtyModule | null {
+  if (ptyModule || ptyLoadError) return ptyModule
+  try {
+    ptyModule = requireNative('node-pty')
+  } catch (err) {
+    ptyLoadError = err instanceof Error ? err.message : String(err)
+  }
+  return ptyModule
 }
 
 export interface PtyManagerEvents {
@@ -43,7 +65,17 @@ export class PtyManager {
     const sessionId = randomUUID()
     const cwd = expandHome(opts.cwd) || os.homedir()
 
-    let proc: pty.IPty
+    const pty = loadPty()
+    if (!pty) {
+      return this.failedSpawn(
+        sessionId,
+        opts.agentId,
+        `node-pty's native binding failed to load (${ptyLoadError}). Run ` +
+          '"npx electron-builder install-app-deps" and restart the app.'
+      )
+    }
+
+    let proc: PtyModule.IPty
     try {
       // Spawn through the user's login shell so PATH/nvm/asdf-managed
       // installs of the claude CLI resolve the same way they would in a
@@ -59,19 +91,7 @@ export class PtyManager {
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      const snapshot: SessionSnapshot = {
-        sessionId,
-        agentId: opts.agentId,
-        status: 'error',
-        startedAt: null,
-        exitCode: null,
-        errorMessage: message,
-        bytesIn: 0,
-        bytesOut: 0
-      }
-      this.events.onError(sessionId, message)
-      this.events.onStatus(snapshot)
-      return snapshot
+      return this.failedSpawn(sessionId, opts.agentId, message)
     }
 
     const tracked: TrackedSession = {
@@ -146,6 +166,22 @@ export class PtyManager {
 
   killAll(): void {
     for (const id of [...this.sessions.keys()]) this.kill(id)
+  }
+
+  private failedSpawn(sessionId: string, agentId: string, message: string): SessionSnapshot {
+    const snapshot: SessionSnapshot = {
+      sessionId,
+      agentId,
+      status: 'error',
+      startedAt: null,
+      exitCode: null,
+      errorMessage: message,
+      bytesIn: 0,
+      bytesOut: 0
+    }
+    this.events.onError(sessionId, message)
+    this.events.onStatus(snapshot)
+    return snapshot
   }
 
   private markActive(sessionId: string): void {

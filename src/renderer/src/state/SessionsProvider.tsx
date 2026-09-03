@@ -30,6 +30,7 @@ export function SessionsProvider({ roster, children }: { roster: AgentProfile[];
   const dataSubsRef = useRef(new Map<string, Set<(chunk: string) => void>>())
   const statusMapRef = useRef(new Map<string, SessionStatus>())
   const countListenersRef = useRef(new Set<() => void>())
+  const lastCountsRef = useRef<RosterCounts>({ active: 0, total: 0 })
 
   const notifyCounts = (): void => countListenersRef.current.forEach((l) => l())
 
@@ -150,11 +151,21 @@ export function SessionsProvider({ roster, children }: { roster: AgentProfile[];
         return () => countListenersRef.current.delete(cb)
       },
       getCounts: () => {
+        // useSyncExternalStore requires a referentially stable snapshot
+        // when nothing changed — allocating a fresh { active, total }
+        // object on every call makes React think the store changes on
+        // every render, which is an infinite render loop. Only replace
+        // the cached object when a count actually moved.
         let active = 0
         for (const status of statusMapRef.current.values()) {
           if (status === 'active' || status === 'spawning') active += 1
         }
-        return { active, total: statusMapRef.current.size }
+        const total = statusMapRef.current.size
+        const last = lastCountsRef.current
+        if (last.active !== active || last.total !== total) {
+          lastCountsRef.current = { active, total }
+        }
+        return lastCountsRef.current
       }
     }),
     []
