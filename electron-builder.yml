@@ -1,0 +1,20 @@
+appId: ai.sensiwise.swarmdesk
+productName: SwarmDesk
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+# node-pty's native .node binding must live outside the asar archive —
+# Node can't dlopen a native addon from inside it.
+asarUnpack:
+  - '**/node_modules/node-pty/**/*'
+mac:
+  target: dmg
+  category: public.app-category.developer-tools
+win:
+  target: nsis
+linux:
+  target: AppImage
+  category: Development

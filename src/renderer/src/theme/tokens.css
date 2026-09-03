@@ -1,0 +1,271 @@
+/**
+ * SwarmDesk "Light Glass" design tokens, ported from
+ * `SwarmDesk Flow v2 Light Glass.dc.html` — same palette, same glass
+ * recipe, same motion keyframes, now as reusable CSS custom properties
+ * instead of one-off inline styles per artboard.
+ */
+:root {
+  --sd-ink: #141a22;
+  --sd-text: rgba(43, 52, 64, 0.86);
+  --sd-text-muted: rgba(43, 52, 64, 0.62);
+  --sd-text-faint: rgba(43, 52, 64, 0.5);
+  --sd-line: rgba(24, 39, 60, 0.09);
+  --sd-line-strong: rgba(24, 39, 60, 0.14);
+
+  --sd-accent: #35618f;
+  --sd-accent-dark: #2c5077;
+  --sd-accent-light: #5e8bc0;
+  --sd-accent-wash: rgba(53, 97, 143, 0.08);
+  --sd-accent-border: rgba(53, 97, 143, 0.3);
+  --sd-accent-glow: 0 8px 24px -10px rgba(53, 97, 143, 0.55);
+
+  --sd-good: #2e7d74;
+  --sd-bad: #a9412c;
+  --sd-warn: #b08428;
+
+  --sd-bg: #e8edf4;
+  --sd-bg-image: radial-gradient(900px 620px at 10% 4%, rgba(53, 97, 143, 0.13), transparent 62%),
+    radial-gradient(1000px 700px at 92% 96%, rgba(53, 97, 143, 0.1), transparent 64%);
+
+  --sd-glass-panel: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.52));
+  --sd-glass-card: rgba(255, 255, 255, 0.72);
+  --sd-glass-card-strong: rgba(255, 255, 255, 0.9);
+  --sd-glass-rail: rgba(255, 255, 255, 0.46);
+  --sd-glass-blur: blur(24px) saturate(170%);
+  --sd-glass-blur-strong: blur(34px) saturate(180%);
+
+  --sd-shadow-panel: 0 40px 80px -32px rgba(24, 39, 60, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --sd-shadow-card: 0 14px 30px -24px rgba(24, 39, 60, 0.35);
+  --sd-shadow-raised: 0 18px 38px -12px rgba(53, 97, 143, 0.9);
+
+  --sd-radius-panel: 20px;
+  --sd-radius-card: 16px;
+  --sd-radius-pill: 20px;
+
+  --sd-font-ui: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, sans-serif;
+  --sd-font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--sd-bg);
+  background-image: var(--sd-bg-image);
+  background-attachment: fixed;
+  color: var(--sd-ink);
+  font-family: var(--sd-font-ui);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+a {
+  color: var(--sd-accent);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--sd-accent-light);
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(24, 39, 60, 0.16);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes sd-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.045);
+    opacity: 1;
+  }
+}
+@keyframes sd-halo {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.08;
+  }
+}
+@keyframes sd-pulse {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes sd-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sd-toast {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sd-sweep {
+  0% {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+}
+@keyframes sd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sd-wave {
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Base glass surfaces, reused by GlassPanel / cards / rails instead of
+   repeating the same background+blur+border+shadow declarations everywhere. */
+.sd-panel {
+  background: var(--sd-glass-panel);
+  border: 1px solid var(--sd-line);
+  box-shadow: var(--sd-shadow-panel);
+  border-radius: var(--sd-radius-panel);
+}
+
+.sd-card {
+  background: var(--sd-glass-card);
+  border: 1px solid var(--sd-line);
+  box-shadow: var(--sd-shadow-card);
+  border-radius: var(--sd-radius-card);
+}
+
+.sd-bar {
+  background: var(--sd-glass-rail);
+  backdrop-filter: var(--sd-glass-blur);
+  -webkit-backdrop-filter: var(--sd-glass-blur);
+  border-bottom: 1px solid var(--sd-line);
+}
+
+.sd-mono {
+  font: 500 11px/1 var(--sd-font-mono);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--sd-text-faint);
+}
+
+.sd-btn-primary {
+  border: none;
+  border-radius: 14px;
+  background: var(--sd-accent);
+  color: #fff;
+  font: 600 13px/1 var(--sd-font-ui);
+  cursor: pointer;
+  box-shadow: 0 12px 30px -12px rgba(53, 97, 143, 0.8);
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease,
+    background 0.2s ease;
+}
+.sd-btn-primary:hover {
+  background: var(--sd-accent-dark);
+  box-shadow: var(--sd-shadow-raised);
+}
+.sd-btn-primary:active {
+  transform: scale(0.985);
+}
+.sd-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
+
+.sd-btn-ghost {
+  border: 1px solid var(--sd-line-strong);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.64);
+  color: var(--sd-text-muted);
+  font: 500 12px/1 var(--sd-font-mono);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.sd-btn-ghost:hover {
+  background: rgba(24, 39, 60, 0.08);
+  color: var(--sd-ink);
+}
+
+/* Lets the top bar double as the window's native drag handle on macOS's
+   hidden-inset title bar, while interactive children opt back out. */
+.sd-drag {
+  -webkit-app-region: drag;
+}
+.sd-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.sd-input {
+  width: 100%;
+  padding: 10px 13px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--sd-line-strong);
+  font: 400 13px/1.4 var(--sd-font-mono);
+  color: var(--sd-ink);
+  resize: vertical;
+}
+.sd-input:focus {
+  outline: none;
+  border-color: var(--sd-accent);
+  box-shadow: 0 0 0 3px rgba(53, 97, 143, 0.16);
+}
